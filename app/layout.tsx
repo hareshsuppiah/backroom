@@ -31,7 +31,14 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${GeistSans.variable} ${GeistMono.variable}`}
     >
-      <body>
+      {/*
+        suppressHydrationWarning on <body> ignores attributes injected by
+        browser extensions (ColorZilla's cz-shortcut-listen, Grammarly's
+        data-gr-*, 1Password's data-lpignore, etc.). Without it, every user
+        with a common extension sees a hydration warning in dev. No effect on
+        legitimate hydration checks — those still fail as normal.
+      */}
+      <body suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
         </ThemeProvider>
