@@ -31,13 +31,6 @@ const config: Config = {
           strong: rgb("--border-strong"),
         },
 
-        text: {
-          primary: rgb("--text-primary"),
-          secondary: rgb("--text-secondary"),
-          tertiary: rgb("--text-tertiary"),
-          disabled: rgb("--text-disabled"),
-        },
-
         accent: {
           DEFAULT: rgb("--accent"),
           hover: rgb("--accent-hover"),
@@ -70,6 +63,16 @@ const config: Config = {
           blocked: rgb("--status-blocked"),
           done: rgb("--status-done"),
         },
+      },
+      // Text colours live in textColor so utilities emit as `text-primary`,
+      // `text-secondary`, etc. — not `text-text-primary` (which is what nesting
+      // them under `colors.text` would produce). See lib/cn.ts for the matching
+      // tailwind-merge config that prevents font-size + text-colour collisions.
+      textColor: {
+        primary: rgb("--text-primary"),
+        secondary: rgb("--text-secondary"),
+        tertiary: rgb("--text-tertiary"),
+        disabled: rgb("--text-disabled"),
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],

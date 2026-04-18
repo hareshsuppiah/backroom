@@ -28,4 +28,17 @@ describe("cn", () => {
   it("accepts nested arrays and objects per clsx conventions", () => {
     expect(cn(["foo", ["bar", { baz: true, qux: false }]])).toBe("foo bar baz");
   });
+
+  // Regression: codex-review #1 (PR #1). Without the extendTailwindMerge config
+  // for the custom font-size group, twMerge collapses both classes to one.
+  it("keeps custom font-size and text-colour classes together", () => {
+    expect(cn("text-body-sm", "text-secondary")).toBe("text-body-sm text-secondary");
+    expect(cn("text-heading-md", "text-primary")).toBe("text-heading-md text-primary");
+    expect(cn("text-mono-sm", "text-tertiary")).toBe("text-mono-sm text-tertiary");
+  });
+
+  it("still resolves conflicts within the font-size group itself", () => {
+    expect(cn("text-body-sm", "text-body-md")).toBe("text-body-md");
+    expect(cn("text-heading-sm", "text-heading-lg")).toBe("text-heading-lg");
+  });
 });
