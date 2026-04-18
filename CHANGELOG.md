@@ -4,6 +4,10 @@ All notable changes to Backroom are documented here. Format follows [Keep a Chan
 
 ## [Unreleased]
 
+### Changed
+
+- Build prompt bumped to v1.3. Security baseline folded into Phase 2 (Dependabot, `pnpm audit` CI gate, gitleaks, `SECURITY.md`). Per-user Server Action rate limiting added to Phase 12. Security headers (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy) added to Phase 13. SBOM generation and TLS guidance added to Phase 14. Outbound webhook design note added to Phase 15. Post-1.0 parking lot added (Public REST API, PATs, webhook implementation). No new phases; no non-goals compromised.
+
 ## [0.0.1] — Phase 1: project scaffold
 
 ### Added

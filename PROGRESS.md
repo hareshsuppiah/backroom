@@ -46,7 +46,7 @@ Phase ordering comes from `docs/build-prompt.md` §6. Each phase ships as its ow
 ## Phase checklist (for future phases)
 
 - [x] Phase 1 — Project scaffold :lock:
-- [ ] Phase 2 — Supabase project & auth (magic link)
+- [ ] Phase 2 — Supabase project & auth (magic link) + security baseline (Dependabot, `pnpm audit`, gitleaks, `SECURITY.md`)
 - [ ] Phase 3 — Organisations, memberships, department model :lock:
 - [ ] Phase 4 — Items core with status transitions and audit log
 - [ ] Phase 5 — Public intake form :lock:
@@ -56,7 +56,8 @@ Phase ordering comes from `docs/build-prompt.md` §6. Each phase ships as its ow
 - [ ] Phase 9 — Working calendars & business-hours math
 - [ ] Phase 10 — SLA targets & breach flagging
 - [ ] Phase 11 — Analytics dashboards :lock:
-- [ ] Phase 12 — Notifications, email, weekly digest
-- [ ] Phase 13 — Search, export, polish
-- [ ] Phase 14 — Self-host packaging :lock: (= 1.0)
-- [ ] Phase 15 — Simulation service scaffold (v2 foundation)
+- [ ] Phase 12 — Notifications, email, weekly digest + per-user rate limiting
+- [ ] Phase 13 — Search, export, polish + security headers (CSP, HSTS, etc.)
+- [ ] Phase 14 — Self-host packaging :lock: (= 1.0) + SBOM + TLS guide
+- [ ] Phase 15 — Simulation service scaffold + v2 webhook design note
+- [ ] Phase 16+ (post-1.0, parked) — Public REST API, PATs, webhook implementation

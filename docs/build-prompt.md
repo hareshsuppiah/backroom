@@ -499,11 +499,21 @@ This phase exists to make TDD possible and to lay the design foundation. Do not 
 - Session handling with Supabase SSR helper
 - `.env.local` and `.env.example` updated with Supabase keys
 
+**Security baseline (bundled into this phase):**
+- `.github/dependabot.yml` tracking pnpm, GitHub Actions, and Docker ecosystems — daily checks, grouped minor/patch PRs, dedicated reviewer
+- CI job running `pnpm audit --audit-level=high` that fails on any high or critical advisory. Runs on every PR alongside lint/typecheck/tests
+- Secret-scanning via **gitleaks**: pre-commit hook (via Husky) blocks commits containing credentials; CI job runs the same scan on every PR with a baseline file to suppress known false positives
+- `SECURITY.md` at the repo root with a disclosure email address and response-time expectations. GitHub auto-links it from the Security tab and issue templates
+
 **Acceptance:**
 - User can sign up with email, receive magic link, click it, and land on `/app`
 - Signed-out user hitting `/app` redirects to `/login`
 - Profile row exists for the signed-in user
 - RLS policies verified by an integration test
+- Dependabot opens its first PRs within 24h of merge (observable in the PR list)
+- `pnpm audit` CI job blocks the PR when a dependency is deliberately pinned to a vulnerable version (test this once, then revert)
+- Gitleaks blocks a commit containing a fake AWS-style key (test once, then revert)
+- `SECURITY.md` is visible at `/security/policy` on the GitHub repo page
 
 ### Phase 3 — Organisations, memberships, department model
 
@@ -653,11 +663,14 @@ This phase exists to make TDD possible and to lay the design foundation. Do not 
 - Per-user notification preferences (UI + DB columns on `profiles`)
 - Weekly digest email (Monday 08:00 org time) summarising: open items, closed last week, SLA compliance, top contributors. Sent to org admins by default, opt-in for others
 - Email templates rendered with **React Email**
+- **Per-user rate limiting on Server Actions** to protect against compromised or misbehaving staff accounts. Token-bucket in `lib/rate-limit.ts` backed by a Postgres table (no Redis dependency for self-host). Default: 1000 actions per hour per user, configurable. Actions that exceed the bucket return a typed `RateLimitExceeded` response; UI surfaces a toast. Public intake form retains its per-IP limit from Phase 5
+- Rate-limit telemetry visible to org admins under `/app/settings/security` (counters by user, last 24h)
 
 **Acceptance:**
 - Assigning an item to another user triggers an email within 60 seconds
 - A user can mute email notifications for a specific item
 - The weekly digest renders correctly in Gmail, Outlook, and Apple Mail (test with Litmus or Email on Acid if available)
+- A test simulates 1001 creates from one user in one hour; the 1001st is rejected with a clear error and the rejection is logged in `audit_log`
 
 ### Phase 13 — Search, export, polish
 
@@ -669,11 +682,15 @@ This phase exists to make TDD possible and to lay the design foundation. Do not 
 - Loading states, empty states, error states for every route
 - Accessibility audit: WCAG 2.1 AA (use axe-core)
 - Performance audit: Lighthouse ≥ 90 on key routes
+- **Security headers** in `next.config.ts` `headers()`: strict Content-Security-Policy, `Strict-Transport-Security` (max-age 31536000 includeSubDomains preload), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` deny camera/microphone/geolocation by default. Report-only CSP first, upgrade to enforcing after a one-week soak
+- CSP violation reporting endpoint at `/api/csp-report` that logs to `audit_log` for review
 
 **Acceptance:**
 - Search returns results in under 300ms for a 10,000-item org
 - Lighthouse scores: Performance ≥ 90, Accessibility = 100, Best Practices ≥ 95, SEO ≥ 90 on public routes
 - Zero axe-core critical or serious violations
+- Securityheaders.com scan of a deployed preview returns grade A or better
+- CSP does not block any legitimate asset (verified by zero reports during the soak window)
 
 ### Phase 14 — Self-host packaging
 
@@ -683,11 +700,16 @@ This phase exists to make TDD possible and to lay the design foundation. Do not 
 - Backup script (`scripts/backup.sh`) that runs `pg_dump` to a configurable location
 - Health check endpoint at `/api/health`
 - First-run setup wizard: on blank database, create an admin user via a one-time URL printed to server logs
+- **SBOM generation in CI** using `syft`. Release workflow emits `sbom.spdx.json` and attaches it to the GitHub release. Enterprises that evaluate Backroom can request the SBOM directly
+- Self-host guide explicitly documents Supabase's at-rest encryption (AES-256 by default) and points operators at the Postgres config for customer-managed keys if needed
+- Self-host guide includes a **default-deny firewall** example (ufw rules) and a TLS section pointing at Caddy for automatic Let's Encrypt
 
 **Acceptance:**
 - A contributor can clone the repo, run `docker compose up`, and reach the app at localhost:3000 with a working database in under 10 minutes
 - Self-host guide followed by someone with basic Linux skills leads to a working instance on a VPS
 - `scripts/backup.sh | tar | scp` produces a restorable snapshot
+- `syft . -o spdx-json` runs in CI and the artifact is downloadable from the release
+- The self-host guide walks through TLS setup end-to-end in under 5 minutes
 
 ### Phase 15 — Simulation service scaffold (v2 foundation, not the full build)
 
@@ -698,12 +720,28 @@ This phase exists to make TDD possible and to lay the design foundation. Do not 
 - `Dockerfile` for the service
 - `docker-compose.yml` extended to include the simulation service
 - Read-only database role with access only to `items`, `status_transitions`, `time_logs`, `departments`, `item_types` used by the simulation service
+- **Design note** (not implementation) added to `docs/architecture.md` for the v2 integration primitive: **outbound webhooks** as the single integration substrate. HMAC-SHA256 signature in `X-Backroom-Signature`, unique UUID in `X-Backroom-Delivery`, event name in `X-Backroom-Event`. Exponential-backoff retry on non-2xx (10min / 30min / 2h / 8h / abandon). One webhook system replaces per-vendor Slack/Teams/Discord connectors. Reference: Plane's webhook design at https://developers.plane.so/dev-tools/intro-webhooks
 
 **Acceptance:**
 - The simulation service starts via docker-compose
 - Health endpoint responds
 - Service can connect to the database and run `SELECT 1`
 - v2 build is explicitly noted as out of scope for this phase
+- Webhook design note is visible in `docs/architecture.md` with the header signature, event list, and retry policy specified
+
+### Post-1.0 (Phase 16+) — not in scope for v1
+
+Parked ideas, not commitments. Revisit once three orgs are running v1 in production and a real integration need drives them:
+
+- **Public REST API** with Personal Access Tokens (`X-API-Key` header), cursor pagination, scoped to read-only items/departments/analytics first. Open question #3 in the brief already flags this
+- **Outbound webhooks** per the Phase 15 design note
+- **OAuth app platform** for third-party apps to act on behalf of users. Only if Backroom becomes a platform, which is not the v1 thesis
+
+Explicitly **not** on the roadmap, even long-term:
+- Inbound webhooks beyond what the public intake form provides
+- Per-field-level API permissions
+- GraphQL anything
+- A CLI beyond `scripts/`
 
 ---
 
@@ -901,13 +939,22 @@ If in doubt, the rule is: does this belong in a PM tool, or in an AMS? If AMS, r
 - [ ] RLS enabled and tested on every new table
 - [ ] Service role key never exposed to the browser
 - [ ] Public endpoints rate-limited
+- [ ] Authenticated Server Actions rate-limited per user (Phase 12)
 - [ ] Inputs validated with Zod before any DB write
 - [ ] File uploads scanned for type (allowlist: images, PDFs, docx, xlsx, csv, txt)
 - [ ] No PII in application logs
 - [ ] Signed JWT tokens for status links have short TTLs and are cryptographically signed
-- [ ] Dependencies checked for known vulnerabilities (Dependabot + `pnpm audit`)
+- [ ] Dependencies checked for known vulnerabilities (Dependabot + `pnpm audit` CI gate from Phase 2)
+- [ ] Secrets scanned pre-commit and in CI (gitleaks, Phase 2)
 - [ ] HTTPS enforced everywhere via Vercel (hosted) and documented for self-host
 - [ ] CORS restricted to the org's configured origins for any public API
+- [ ] Security headers enforced via `next.config.ts` (Phase 13): CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy
+- [ ] `SECURITY.md` with disclosure policy at repo root (Phase 2)
+- [ ] SBOM emitted in release workflow (Phase 14)
+
+### Reviewer note
+
+This project uses two independent AI reviewers — Claude (`/review`) and Codex (`/codex:review`) — on every PR. Human self-review is still expected. Three layers of eyes catch more than any single one. Adding a third AI reviewer (e.g. CodeRabbit) is diminishing returns; do not add one without a concrete gap the existing two miss.
 
 ---
 
@@ -939,4 +986,4 @@ Before proceeding past a checkpoint, post a summary in `PROGRESS.md` and wait fo
 
 ---
 
-*Build prompt version 1.2. Design discipline added; references `DESIGN_SYSTEM.md`.*
+*Build prompt version 1.3. Security baseline folded into Phase 2, per-user rate limiting into Phase 12, security headers into Phase 13, SBOM and TLS guide into Phase 14, v2 webhook design note into Phase 15, Post-1.0 parking lot added. Scope discipline: no new phases, no new non-goals compromised.*
