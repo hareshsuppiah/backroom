@@ -1,13 +1,22 @@
+import { updateSession } from "@/lib/supabase/middleware";
 import { type NextRequest, NextResponse } from "next/server";
 
-/**
- * Stub. Phase 2 green commit replaces this with @supabase/ssr session
- * refresh + redirect for unauthenticated /app/* requests.
- */
-export async function middleware(_request: NextRequest): Promise<NextResponse> {
-  return NextResponse.next();
+export async function middleware(request: NextRequest): Promise<NextResponse> {
+  const { response, user } = await updateSession(request);
+
+  if (request.nextUrl.pathname.startsWith("/app") && !user) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.search = "";
+    if (request.nextUrl.pathname !== "/app") {
+      loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    }
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return response;
 }
 
 export const config = {
-  matcher: [],
+  matcher: ["/((?!_next/static|_next/image|favicon.svg|favicon.ico|api/health).*)"],
 };
