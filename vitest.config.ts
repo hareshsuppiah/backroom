@@ -25,7 +25,15 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "lcov", "html"],
       include: ["lib/**/*.{ts,tsx}"],
-      exclude: ["lib/**/*.d.ts", "lib/**/index.ts", "lib/**/__mocks__/**"],
+      exclude: [
+        "lib/**/*.d.ts",
+        "lib/**/index.ts",
+        "lib/**/__mocks__/**",
+        // Supabase client factories are exercised by the integration suite
+        // (tests/integration/**) against a real local stack — mocking them in
+        // unit tests would prove only that the mocks work.
+        "lib/supabase/**",
+      ],
       thresholds: {
         lines: 85,
         branches: 85,
