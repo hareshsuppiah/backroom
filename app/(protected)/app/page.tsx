@@ -1,3 +1,5 @@
+import { signOut } from "@/app/(auth)/actions";
+import { Button } from "@/components/ui/button";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -23,6 +25,11 @@ export default async function AppHome() {
           The operations dashboard lands in Phase 3. This page confirms session handling and the
           protected route guard are working.
         </p>
+        <form action={signOut}>
+          <Button type="submit" variant="ghost" size="md">
+            Sign out
+          </Button>
+        </form>
       </div>
     </main>
   );

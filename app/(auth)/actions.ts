@@ -1,8 +1,10 @@
 "use server";
 
-/**
- * Stub. Phase 2 green commit replaces this with a Supabase signOut + redirect.
- */
+import { getSupabaseServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+
 export async function signOut(): Promise<void> {
-  throw new Error("signOut: not implemented");
+  const supabase = await getSupabaseServerClient();
+  await supabase.auth.signOut();
+  redirect("/login");
 }
