@@ -29,10 +29,12 @@ export default defineConfig({
         "lib/**/*.d.ts",
         "lib/**/index.ts",
         "lib/**/__mocks__/**",
-        // Supabase client factories are exercised by the integration suite
-        // (tests/integration/**) against a real local stack — mocking them in
-        // unit tests would prove only that the mocks work.
+        // Supabase client factories and the auth helpers that drive them are
+        // exercised by the integration suite (tests/integration/**) against a
+        // real local stack — mocking them in unit tests would prove only that
+        // the mocks work.
         "lib/supabase/**",
+        "lib/auth/**",
       ],
       thresholds: {
         lines: 85,
