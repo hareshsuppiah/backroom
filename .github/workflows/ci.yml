@@ -89,10 +89,26 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  audit:
+    name: pnpm audit (high+critical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit production dependencies
+        run: pnpm audit --audit-level=high --prod
+
   build:
     name: Next build
     runs-on: ubuntu-latest
-    needs: [lint, typecheck]
+    needs: [lint, typecheck, audit]
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
