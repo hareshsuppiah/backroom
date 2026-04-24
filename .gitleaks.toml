@@ -1,0 +1,15 @@
+title = "Backroom gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Build artefacts, lockfiles, and reports — none of these are part of the source tree we ship."
+paths = [
+  '''\.next/''',
+  '''coverage/''',
+  '''playwright-report/''',
+  '''test-results/''',
+  '''node_modules/''',
+  '''pnpm-lock\.yaml''',
+]
