@@ -4,9 +4,29 @@ All notable changes to Backroom are documented here. Format follows [Keep a Chan
 
 ## [Unreleased]
 
+## [0.0.2] — Phase 2: Supabase auth + security baseline
+
+### Added
+
+- `@supabase/ssr` browser, server, and middleware clients in `lib/supabase/`
+- First migration: `organisations`, `profiles`, `memberships` with row-level security; `security definer` helpers avoid recursive RLS on `memberships`
+- Magic-link sign-in: `/login` form + `sendMagicLink` Server Action (zod-validated)
+- `/auth/callback` route handler exchanges the code, upserts the profile (idempotent), redirects to `/app`
+- Protected `/app` route via `middleware.ts` + `app/(protected)/layout.tsx` defence-in-depth check
+- Sign-out Server Action and ghost button on `/app`
+- Integration test stack: separate `vitest.integration.config.ts`, helpers for service-role and per-user anon clients, RLS cross-tenant assertions, profile-upsert idempotency assertions
+- `.github/dependabot.yml` for npm, github-actions, and docker (weekly, grouped minor/patch)
+- `pnpm audit --audit-level=high --prod` CI job, wired into `build.needs`
+- gitleaks pre-commit hook (Husky) and `secrets-scan` CI job using `gitleaks/gitleaks-action@v2`
+- `integration` CI job that boots a local Supabase stack via `supabase/setup-cli@v1`
+- `SECURITY.md` with disclosure contact and response SLAs
+- `.gitleaks.toml` allowlisting build artefacts and lockfiles
+
 ### Changed
 
-- Build prompt bumped to v1.3. Security baseline folded into Phase 2 (Dependabot, `pnpm audit` CI gate, gitleaks, `SECURITY.md`). Per-user Server Action rate limiting added to Phase 12. Security headers (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy) added to Phase 13. SBOM generation and TLS guidance added to Phase 14. Outbound webhook design note added to Phase 15. Post-1.0 parking lot added (Public REST API, PATs, webhook implementation). No new phases; no non-goals compromised.
+- `vitest.config.ts` excludes `lib/supabase/**` and `lib/auth/**` from the 85% coverage gate — these are exercised by the integration suite
+- `package.json` adds `test:integration` and `db:reset` scripts
+- Build prompt previously bumped to v1.3 (security baseline folded into Phase 2; per-user rate limiting in Phase 12; security headers in Phase 13; SBOM/TLS in Phase 14; outbound webhook design note in Phase 15; post-1.0 parking lot for Public REST API, PATs, webhook implementation). No new phases; no non-goals compromised.
 
 ## [0.0.1] — Phase 1: project scaffold
 
