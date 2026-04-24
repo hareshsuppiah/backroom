@@ -67,6 +67,39 @@ jobs:
           path: coverage/
           retention-days: 7
 
+  integration:
+    name: Integration (Supabase)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start Supabase
+        run: supabase start --workdir .
+      - name: Apply migrations
+        run: supabase db reset --workdir .
+      - name: Export Supabase env
+        run: |
+          supabase status -o env --workdir . | sed \
+            -e 's/^API_URL=/NEXT_PUBLIC_SUPABASE_URL=/' \
+            -e 's/^ANON_KEY=/NEXT_PUBLIC_SUPABASE_ANON_KEY=/' \
+            -e 's/^SERVICE_ROLE_KEY=/SUPABASE_SERVICE_ROLE_KEY=/' \
+            >> "$GITHUB_ENV"
+      - name: Run integration suite
+        run: pnpm test:integration
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop --workdir . --no-backup
+
   e2e:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
