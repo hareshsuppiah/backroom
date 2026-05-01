@@ -8,6 +8,29 @@ Phase ordering comes from `docs/build-prompt.md` §6. Each phase ships as its ow
 
 ---
 
+## Next session — pick up here
+
+Phase 2 PR is open: **https://github.com/hareshsuppiah/backroom/pull/3**
+
+Before merging:
+
+1. **Confirm or change the security disclosure email** in `SECURITY.md` (currently defaults to `haresh@humanperformance.sg`).
+2. **Manual smoke test** (5 min). After restart, restart Docker, then:
+   - `supabase start` (re-pulls keys; `.env.local` already has the well-known local-dev defaults)
+   - `pnpm dev`
+   - Visit http://localhost:3000/app → expect bounce to `/login`
+   - Submit your email → expect "Check your inbox"
+   - Open Inbucket http://127.0.0.1:54324 → click magic link → expect landing on `/app` showing your email
+   - Click "Sign out" → expect redirect to `/login`
+3. **Optional: `/codex review`** on the branch (it caught two real Tailwind bugs in Phase 1).
+4. **Watch CI** finish all 8 jobs (lint, typecheck, audit, secrets-scan, unit, integration, e2e, build), then squash-merge.
+
+Optional out-of-PR security-gate evidence (one-off): pin a vulnerable dep on a throwaway branch and confirm the `audit` job blocks it; commit a fake `AKIAIOSFODNN7EXAMPLE` AWS key on another throwaway branch and confirm the gitleaks pre-commit hook blocks it. Screenshot both and attach to the PR.
+
+After Phase 2 merges: **stop**. Phase 3 is a maintainer-review checkpoint (:lock:) — wait for explicit go-ahead before starting.
+
+---
+
 ## Phase 1 — Project scaffold :lock:
 
 **Status:** shipped · merged as `469c726`
