@@ -20,12 +20,22 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],
     include: ["tests/**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["e2e/**", "node_modules/**", ".next/**"],
+    exclude: ["e2e/**", "tests/integration/**", "node_modules/**", ".next/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "lcov", "html"],
       include: ["lib/**/*.{ts,tsx}"],
-      exclude: ["lib/**/*.d.ts", "lib/**/index.ts", "lib/**/__mocks__/**"],
+      exclude: [
+        "lib/**/*.d.ts",
+        "lib/**/index.ts",
+        "lib/**/__mocks__/**",
+        // Supabase client factories and the auth helpers that drive them are
+        // exercised by the integration suite (tests/integration/**) against a
+        // real local stack — mocking them in unit tests would prove only that
+        // the mocks work.
+        "lib/supabase/**",
+        "lib/auth/**",
+      ],
       thresholds: {
         lines: 85,
         branches: 85,

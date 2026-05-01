@@ -1,1 +1,9 @@
 pnpm lint-staged
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks protect --staged --redact --verbose
+else
+  echo "gitleaks not installed locally — skipping pre-commit secrets scan."
+  echo "Install: brew install gitleaks (macOS) or see https://github.com/gitleaks/gitleaks"
+  echo "CI runs gitleaks unconditionally; commits that contain secrets will fail there."
+fi
